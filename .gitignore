@@ -1,0 +1,11 @@
+dmn.config.inc.php
+axeblocknotify.config.inc.php
+axedupdate.php.lasthash
+.ssh
+.bash_history
+.bash_logout
+.bash_profile
+.bashrc
+.profile
+.gitconfig
+dmnautoupdate.data.json

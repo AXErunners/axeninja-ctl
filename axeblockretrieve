@@ -1,0 +1,119 @@
+#!/usr/bin/php
+<?php
+
+/*
+    This file is part of AXE Ninja.
+    https://github.com/elbereth/axeninja-ctl
+
+    AXE Ninja is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    AXE Ninja is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with AXE Ninja.  If not, see <http://www.gnu.org/licenses/>.
+
+ */
+
+DEFINE('DMN_SCRIPT',true);
+
+require_once('EasyAxe-PHP/easyaxe.php');
+require_once('AxeConfig.class.php');
+require_once('dmn.config.inc.php');
+require_once('axeblocknotify.config.inc.php');
+
+define('AXEBLOCKRETRIEVE','0.2.2-beta');
+
+function xecho($line) {
+  echo date('Y-m-d H:i:s').' - '.$line;
+}
+
+xecho('AxeNinja.pl Block Retrieve v'.AXEBLOCKRETRIEVE."\n");
+if (($argc < 3) || ($argc > 5)) {
+  echo 'Usage: '.basename($argv[0]).' uname blockid [blockidto] [forcearchive]'."\n";
+  die(1);
+}
+
+$uname = $argv[1];
+$blockidfrom = intval($argv[2]);
+if ($argc >= 4) {
+  $blockidto = intval($argv[3]);
+}
+else {
+  $blockidto = $blockidfrom;  
+}
+if ($blockidto < $blockidfrom) {
+  xecho("Parameter error: $blockidto must be after $blockidfrom\n");
+  die(2);
+}
+if (($argc > 4) && ($argv[4] == 'forcearchive')) {
+  $outdir = DMN_BLOCKPARSER_ARCHIVE;
+}
+else {
+  $outdir = "/dev/shm";
+}
+
+xecho("Block retrieval from $uname (from $blockidfrom to $blockidto), retrieving RPC configuration: ");
+
+if (isset($unamelist) && is_array($unamelist) && array_key_exists($uname,$unamelist)) {
+  $config = new AxeConfig($uname);
+  $rpc = new \elbereth\EasyAxe($config->getconfig('rpcuser'),$config->getconfig('rpcpassword'),'localhost',$config->getconfig('rpcport'));
+  echo "OK\n";
+}
+else {
+  echo "Not found!\n";
+  die(2);
+}
+
+xecho("Retrieving blocks information:\n");
+for ($x = $blockidfrom; $x <= $blockidto; $x++) {
+  xecho(" Block ID#$x: ");  
+  $blockhash = $rpc->getblockhash($x);
+  if ($blockhash !== false) {
+    echo $blockhash;
+    $try = 0;
+    do {
+        echo ".";
+        $blockjson = $rpc->getblock($blockhash);
+        if (is_null($blockjson)) {
+            usleep(200000*$try+100000);
+        }
+        $try++;
+    } while (is_null($blockjson) && ($try <= 10));
+    if (($blockjson !== false) || (is_null($blockjson))) {
+      if (!is_dir($outdir."/$uname")) {
+        mkdir($outdir."/$uname",0777,true);
+      }
+      $tmpfilename = tempnam($outdir,"drkblockretrieve.$uname");
+      file_put_contents($tmpfilename,json_encode($blockjson));
+      $rename = $outdir."/$uname/block.".$blockjson['height'].".json";
+      echo "OK\n";
+      if (!is_dir($outdir."/$uname/tx")) {
+        mkdir($outdir."/$uname/tx",0777,true);
+      }
+      foreach($blockjson['tx'] as $id => $txhash) {
+        xecho("  Retrieving tx #$id ($txhash): ");
+        $txraw = $rpc->getrawtransaction($txhash);
+        if ($txraw !== false) {
+          $tx = $rpc->decoderawtransaction($txraw);
+          file_put_contents($outdir."/$uname/tx/transaction.$txhash.json",json_encode($tx));
+          echo "OK\n";
+        }
+      }
+      rename($tmpfilename,$rename);
+    }
+    else {
+      echo "Error during RPC call for block JSON\n";
+    }
+  }
+  else {
+    echo "Error during RPC call for block hash\n";
+  }
+}
+
+?>

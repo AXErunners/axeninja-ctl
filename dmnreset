@@ -1,0 +1,31 @@
+#!/bin/bash
+
+function cleanFile() {
+  if [ -e "$1.dat" ]
+  then
+    echo -n "Deleting $1.dat... "
+    rm $1.dat
+    if [ $? == 0 ]
+    then
+      echo "OK"
+    else
+      echo "Error"
+    fi
+  fi
+}
+if [ "$1" == "test" ]
+then
+  mnsuffix=/testnet3
+fi
+mnpath=/home/$2/.axe$mnsuffix
+echo "Cleaning axe data directory: $mnpath"
+if [ -d "$mnpath" ]
+then
+  cleanFile "$mnpath/budget"
+  cleanFile "$mnpath/coinbase-payee"
+  cleanFile "$mnpath/fee_estimates"
+  cleanFile "$mnpath/mncache"
+  cleanFile "$mnpath/peers"
+else
+  echo "User home directory not found"
+fi

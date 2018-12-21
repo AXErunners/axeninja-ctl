@@ -1,0 +1,35 @@
+#!/bin/zsh
+#
+#   This file is part of AXE Ninja.
+#   https://github.com/elbereth/axeninja-ctl
+#
+#   AXE Ninja is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   AXE Ninja is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with AXE Ninja.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+# Disable logging by default
+blockdegapperlog=/dev/null
+blockparserlog=/dev/null
+blocksjsonlog=/dev/null
+
+# If parameter 1 is log then enable logging
+if [[ "$1" == "log" ]]; then
+  blockdegapperlog=/var/log/dmn/blockdegapper.log
+  blocksjsonlog=/var/log/dmn/blocksjson.log
+fi
+
+# Sequentially run scripts
+/usr/bin/nice -n 14 /opt/dmnctl/dmnblockdegapper main >> $blockdegapperlog
+/usr/bin/nice -n 14 /opt/dmnctl/dmnblockparser >> $blockparserlog
+/usr/bin/nice -n 14 /usr/bin/php /home/axe-mnwww/www/main/api/cron.php main blocks24h >> $blocksjsonlog
+/usr/bin/nice -n 14 /usr/bin/php /home/axe-mnwww/www/main/api/cron.php main blockssuperblocks >> $blocksjsonlog

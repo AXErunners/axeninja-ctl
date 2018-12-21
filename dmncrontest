@@ -1,0 +1,45 @@
+#!/bin/zsh
+#
+#   This file is part of AXE Ninja.
+#   https://github.com/elbereth/axeninja-ctl
+#
+#   AXE Ninja is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   AXE Ninja is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with AXE Ninja.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+# Disable logging by default
+statuslog=/dev/null
+portchecklog=/dev/null
+balancelog=/dev/null
+
+# If parameter 1 is log then enable logging
+if [[ "$1" == "log" ]]; then
+  rundate=$(date +%Y%m%d%H%M%S)
+  statuslog=/var/log/dmn/status.$rundate.log
+  portchecklog=/var/log/dmn/status.$rundate.log
+  balancelog=/var/log/dmn/status.$rundate.log
+fi
+
+# Sequentially run scripts
+/opt/dmnctl/dmnctl status testnet >> $statuslog
+/usr/bin/php /opt/dmnctl/dmndbgen masternodeactive >> $statuslog
+/usr/bin/php /home/axe-www/www/api/cron.php test nodesstatus >> $statuslog
+/usr/bin/php /home/axe-www/www/api/cron.php test blocksconsensus >> $statuslog
+/usr/bin/php /home/axe-www/www/api/cron.php test votelimit >> $statuslog
+/usr/bin/php /home/axe-www/www/api/cron.php test masternodeslistfull >> $statuslog
+/usr/bin/php /home/axe-www/www/api/cron.php test governanceproposals >> $statuslog
+/usr/bin/php /home/axe-www/www/api/cron.php test governancetriggers >> $statuslog
+
+/usr/bin/nice -n 19 /opt/dmnctl/dmnportcheck db >> $portchecklog &
+/usr/bin/nice -n 18 /opt/dmnctl/dmnbalance >> $balancelog &
+

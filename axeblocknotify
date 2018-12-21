@@ -1,0 +1,236 @@
+#!/usr/bin/php
+<?php
+
+/*
+    This file is part of AXE Ninja.
+    https://github.com/elbereth/axeninja-ctl
+
+    AXE Ninja is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    AXE Ninja is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with AXE Ninja.  If not, see <http://www.gnu.org/licenses/>.
+
+ */
+
+require_once('EasyAxe-PHP/easyaxe.php');
+require_once('AxeConfig.class.php');
+require_once('axeblocknotify.config.inc.php');
+
+define('AXEBLOCKNOTIFY','0.7.0-beta');
+
+function xecho($line) {
+  echo date('Y-m-d H:i:s').' - '.$line;
+}
+
+$verbose = (($argc == 4) && ($argv[3] == 'verbose'));
+
+if ($verbose) {
+  xecho('AxeNinja.pl Block Notify v'.AXEBLOCKNOTIFY."\n");
+}
+
+if (($argc != 3) && ($argc != 4)) {
+  if ($verbose) {
+    echo 'Usage: '.basename($argv[0]).' uname|auto blockhash [verbose]'."\n";
+  } 
+  die(1);
+}
+
+$uname = $argv[1];
+if ($uname == 'auto') {
+  $uname = posix_getpwuid(posix_geteuid());
+  $uname = $uname['name'];
+}
+$blockhash = $argv[2];
+
+//$verbose = true;
+
+if ($verbose) {
+  xecho("Block received from $uname, retrieving RPC configuration: ");
+}
+
+if (isset($unamelist) && is_array($unamelist) && array_key_exists($uname,$unamelist)) {
+  $config = new AxeConfig($uname);
+  $rpc = new \elbereth\EasyAxe($config->getconfig('rpcuser'),$config->getconfig('rpcpassword'),'localhost',$config->getconfig('rpcport'));
+  if ($verbose) {
+    echo "OK\n";
+  }
+}
+else {
+  if ($verbose) {
+    echo "Not found!\n";
+  }
+  die(2);
+}
+
+$retrieveblock = $unamelist[$uname]['block'];
+$retrieveblocktemplate = $unamelist[$uname]['bt'];
+$retrievemempool = $unamelist[$uname]['mempool'];
+
+if ($retrieveblocktemplate) {
+  if ($verbose) {
+    xecho("Retrieving block template: ");
+  }
+  if (!is_dir("/dev/shm/$uname/bt")) {
+    mkdir("/dev/shm/$uname/bt",0700,true);
+  }
+  $protocol = 0;
+  $version = 0;
+  $try = 0;
+  do {
+    $try++;
+    if ($try > 1) {
+      if ($verbose) {
+        echo "gI Retry ($try): ";
+      }
+    }
+    $info = $rpc->getinfo();
+    if ($info !== false) {
+      $protocol = $info['protocolversion'];
+      $version = $info['version'];
+    }
+    else {
+      usleep(250000);
+    }
+  } while (($info === false) && ($try < 4));
+  if ($verbose) {
+    echo "[pv=$protocol v=$version] ";
+  }
+  $try = 0;
+  do {
+    $try++;
+    if ($try > 1) {
+      if ($verbose) {
+        echo "gBT Retry ($try): ";
+      }
+    }
+    $blocktemplate = $rpc->getblocktemplate();
+    if ($blocktemplate !== false) {
+      file_put_contents("/dev/shm/$uname/bt/blocktemplate.".$blocktemplate['height']."_".$protocol."_".$version.".json",json_encode($blocktemplate));
+      if ($verbose) {
+        echo "OK (ID=".$blocktemplate['height'].")\n";
+      }
+    }
+    else {
+      if ($verbose && ($try == 4)) {
+        echo "Failed\n";
+      }
+      usleep(250000);
+    }
+  } while (($info === false) && ($try < 4));
+}
+if ($retrieveblock) {
+  if ($verbose) {
+    xecho("Retrieving blockhash $blockhash information: ");
+  }
+  $blockjson = $rpc->getblock($blockhash);
+  if ($blockjson !== false) {
+    if (!is_dir("/dev/shm/$uname")) {
+      mkdir("/dev/shm/$uname",0700,true);
+    }
+    if (!is_dir("/dev/shm/$uname/tx")) {
+      mkdir("/dev/shm/$uname/tx",0700,true);
+    }
+    $tmpfilename = tempnam("/dev/shm","axeblocknotify.$uname");
+    file_put_contents($tmpfilename,json_encode($blockjson));
+    $rename = "/dev/shm/$uname/block.".$blockjson['height'].".json";
+    if ($verbose) {
+      echo "OK\n";
+    }
+    foreach($blockjson['tx'] as $id => $txhash) {
+      $try = 0;
+      do {
+        $try++;
+        if ($verbose) {
+          xecho("Retrieving tx #$id ($txhash): ");
+          if ($try > 1) {
+            echo "Retry ($try): ";
+          }
+        }
+        $txraw = $rpc->getrawtransaction($txhash, 1);
+        if ($txraw !== false) {
+          file_put_contents("/dev/shm/$uname/tx/transaction.$txhash.json",json_encode($txraw));
+          if ($verbose) {
+            echo "OK\n";
+          }
+        }
+        else {
+          if ($verbose) {
+            echo "Failed\n";
+          }
+          usleep(250000);
+        }
+      } while (($txraw === false) && ($try < 4));
+    }
+    rename($tmpfilename,$rename);
+  }
+  else {
+    if ($verbose) {
+      echo "Error during RPC call\n";
+    }
+    die(4);
+  }
+}
+
+if ($retrievemempool) {
+  if ($verbose) {
+    xecho("Retrieving mempool information: ");
+  }
+  $mptxes = $rpc->getrawmempool();
+  if ($mptxes !== false) {
+    if (!is_dir("/dev/shm/$uname")) {
+      mkdir("/dev/shm/$uname",0700,true);
+    }
+    if (!is_dir("/dev/shm/$uname/tx")) {
+      mkdir("/dev/shm/$uname/tx",0700,true);
+    }
+    $tmpfilename = tempnam("/dev/shm","axeblocknotify.$uname");
+    file_put_contents($tmpfilename,json_encode($mptxes));
+    $rename = "/dev/shm/$uname/mempool.".$blockjson['height'].".json";
+    if ($verbose) {
+      echo "OK\n";
+    }
+    foreach($mptxes as $id => $txhash) {
+      $try = 0;
+      do {
+        $try++;
+        if ($verbose) {
+          xecho("Retrieving tx #$id ($txhash): ");
+          if ($try > 1) {
+            echo "Retry ($try): ";
+          }
+        }
+        $txraw = $rpc->getrawtransaction($txhash, 1);
+        if ($txraw !== false) {
+          file_put_contents("/dev/shm/$uname/tx/mempooltx.".$blockjson['height'].".$txhash.json",json_encode($txraw));
+          if ($verbose) {
+            echo "OK\n";
+          }
+        }
+        else {
+          if ($verbose) {
+            echo "Failed\n";
+          }
+          usleep(250000);
+        }
+      } while (($txraw === false) && ($try < 4));
+    }
+    rename($tmpfilename,$rename);
+    die();
+  }
+  else {
+    if ($verbose) {
+      echo "Error during RPC call\n";
+    }
+    die(4);
+  }
+}
+
+?>

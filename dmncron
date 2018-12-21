@@ -1,0 +1,53 @@
+#!/bin/zsh
+#
+#   This file is part of AXE Ninja.
+#   https://github.com/elbereth/axeninja-ctl
+#
+#   AXE Ninja is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   AXE Ninja is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with AXE Ninja.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+# Disable logging by default
+updatelog=/dev/null
+statuslog=/dev/null
+votesrrdlog=/dev/null
+balancelog=/dev/null
+portchecklog=/dev/null
+autoupdatelog=/dev/null
+
+# If parameter 1 is log then enable logging
+if [[ "$1" == "log" ]]; then
+  updatelog=/var/log/dmn/update.log
+  statuslog=/var/log/dmn/status.log
+  votesrrdlog=/var/log/dmn/votesrrd.log
+  balancelog=/var/log/dmn/balance.log
+  portchecklog=/var/log/dmn/portcheck.log
+  autoupdatelog=/var/log/dmn/autoupdate.log
+fi
+
+# Sequentially run scripts
+#/opt/dmnctl/axedupdate >> $updatelog
+/opt/dmnctl/dmnctl status >> $statuslog
+#/opt/dmnctl/dmnvotesrrd >> $votesrrdlog
+/usr/bin/php /opt/dmnctl/dmndbgen masternodeactive >> $statuslog
+/usr/bin/php /home/axe-mnwww/www/main/api/cron.php main nodesstatus >> $statuslog
+/usr/bin/php /home/axe-mnwww/www/main/api/cron.php main blocksconsensus >> $statuslog
+/usr/bin/php /home/axe-mnwww/www/main/api/cron.php main votelimit >> $statuslog
+/usr/bin/php /home/axe-mnwww/www/main/api/cron.php main masternodeslistfull >> $statuslog
+/usr/bin/php /home/axe-mnwww/www/main/api/cron.php main governanceproposals >> $statuslog
+/usr/bin/php /home/axe-mnwww/www/main/api/cron.php main governancetriggers >> $statuslog
+
+# Concurrently run scripts
+/usr/bin/nice -n 18 /opt/dmnctl/dmnbalance >> $balancelog &
+/usr/bin/nice -n 19 /opt/dmnctl/dmnportcheck db >> $portchecklog &
+/usr/bin/nice -n 15 /opt/dmnctl/dmnautoupdate >> $autoupdatelog &

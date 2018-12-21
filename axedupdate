@@ -1,0 +1,87 @@
+#!/usr/bin/php
+<?php
+
+/*
+    This file is part of AXE Ninja.
+    https://github.com/elbereth/axeninja-ctl
+
+    AXE Ninja is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    AXE Ninja is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with AXE Ninja.  If not, see <http://www.gnu.org/licenses/>.
+
+ */
+
+require_once("dmn.functions.inc.php");
+
+function tempdir($prefix='php') {
+    $tempfile=tempnam(sys_get_temp_dir(),$prefix);
+    if (file_exists($tempfile)) { unlink($tempfile); }
+    mkdir($tempfile);
+    if (is_dir($tempfile)) { return $tempfile; }
+}
+
+function delTree($dir) {
+  $files = array_diff(scandir($dir), array('.','..'));
+  foreach ($files as $file) {
+    (is_dir("$dir/$file")) ? delTree("$dir/$file") : unlink("$dir/$file");
+  }
+  return rmdir($dir);
+}
+
+xecho("axed auto updater (testnet) v1.0\n");
+xecho("Retrieving current latest binary date and size: ");
+$test = get_headers("https://axerunners.atlassian.net/builds/browse/AXEL-DEV/latest/artifact/JOB1/gitian-linux-axe-dist/axe-0.12.0-linux64.tar.gz", 1);
+echo $test["Last-Modified"]."\n";
+
+$datanew = sha1(serialize(array("Last-Modified" => $test["Last-Modified"],
+                                "Content-Length" => $test["Content-Length"])));
+xecho("Retrieving current binary date and size: ");
+$dataold = file_get_contents(DMN_DIR."axedupdate.php.lasthash");
+echo "OK\n";
+
+if ($datanew != $dataold) {
+  file_put_contents(DMN_DIR."/axedupdate.php.lasthash",$datanew);
+  xecho("Stopping testnet nodes... ");
+  passthru(DMN_DIR."/dmnctl stop testnet");
+  passthru(DMN_DIR."/dmnctl stop testnet p2pool");
+  xecho("Reseting data (not the blockchain/wallet)... ");
+  passthru(DMN_DIR."/dmnreset test tdmn01",$output);
+  passthru(DMN_DIR."/dmnreset test tdmn02");
+  passthru(DMN_DIR."/dmnreset test tdmn03");
+  passthru(DMN_DIR."/dmnreset test tdmn04");
+  passthru(DMN_DIR."/dmnreset test tp2pool");
+  xecho("Getting new binary: ");
+  $tmpdir = tempdir("axedupdater");
+  $curdir = getcwd();
+  chdir($tmpdir);
+  passthru("wget -q https://axerunners.atlassian.net/builds/browse/AXEL-DEV/latest/artifact/JOB1/gitian-linux-axe-dist/axe-0.12.0-linux64.tar.gz");
+  echo "OK... Untar: ";
+  passthru("tar xvf axe-0.12.0-linux64.tar.gz");
+  echo "OK... Version: ";
+  $fnam = $tmpdir."/axe-0.12.0/bin/axed";
+  $versionraw = dmn_axedversion($fnam);
+  echo $versionraw."... Moving: ";
+  $fnamnew = "/opt/axed/0.12/axed-$versionraw";
+  rename($fnam,$fnamnew);
+  echo "OK... Submitting to DB: ";
+  passthru("dmnctl version $fnamnew $versionraw 1 1");
+  echo "OK\n";
+  chdir($curdir);
+  delTree($tmpdir);
+  xecho("Starting testnet nodes with re-index... ");
+  unlink("/home/axe-ninja/cache/axeninja_cmd_getnodes_1");
+  passthru(DMN_DIR."/dmnctl start testnet masternode reindex");
+  passthru(DMN_DIR."/dmnctl start testnet p2pool reindex");
+  echo "OK\n";
+}
+
+?>

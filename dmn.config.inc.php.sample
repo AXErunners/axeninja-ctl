@@ -1,0 +1,133 @@
+<?php
+
+/*
+    This file is part of AXE Ninja.
+    https://github.com/elbereth/axeninja-ctl
+
+    AXE Ninja is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    AXE Ninja is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with AXE Ninja.  If not, see <http://www.gnu.org/licenses/>.
+
+ */
+
+// Copy this files to dmn.config.inc.php and change the values as you wish
+
+// Check we are run part of a script and not standalone
+if (!defined('DMN_SCRIPT') || (DMN_SCRIPT !== true)) {
+  die("Not executable.\n");
+}
+
+// Path and regex to nodes
+//  Path to nodes
+DEFINE('DMN_PID_PATH','/home/');
+//  Username of the p2pool node
+DEFINE('DMN_P2POOL_UNAME','p2pool');
+//  Prefix for masternode usernames
+DEFINE('DMN_PID_PREFIX','dmn');
+//  Regex for masternode usernames
+DEFINE('DMN_PID_REGEX',"/dmn(\d\d*)/");
+
+// Default path to axed
+DEFINE('DMN_AXED_DEFAULT','/usr/local/bin/axed');
+
+// How much to wait for start/stop before giving up (in seconds)
+DEFINE('DMN_STOPWAIT',10);
+
+// Nice level for mainnet and testnet nodes
+DEFINE('DMN_NICELEVEL_MAIN',10);
+DEFINE('DMN_NICELEVEL_TEST',18);
+
+// How many successive times a node can be notresponding before force-stop or restart
+DEFINE('DMN_NRCOUNT',3);
+DEFINE('DMN_NRCOUNT_TEST',6);
+// Where to store the counter file
+DEFINE('DMN_NRCOUNTDIR','/tmp/');
+// Log NRs
+DEFINE('DMN_NRCOUNTLOG','/var/log/dmn/nrcount.log');
+
+// Parallel threads (for start-stop and RPC commands)
+DEFINE('DMN_THREADS_MAX',8);
+
+// Semaphores
+//   ctl auto status
+DEFINE('DMN_CTLSTATUSAUTO_SEMAPHORE','/var/run/dmnctlstatusauto%d.pid');
+//   dbgen
+DEFINE('DMN_DBGEN_SEMAPHORE','/var/run/dmndbgen.pid');
+
+// Port checker specifics
+//  Semaphore for multi-threading (only allow 1 instance)
+DEFINE('DMN_PORTCHECK_SEMAPHORE','/var/run/dmnportcheck.pid');
+//  Time-out for checking port after this number of seconds
+DEFINE('DMN_PORTCHECK_TIMEOUT',4);
+//  Interval between checks for a node (in seconds)
+DEFINE('DMN_PORTCHECK_INTERVAL',3600);
+
+// Balancer retriever specifics
+//  Semaphore file (only allow 1 instance)
+DEFINE('DMN_BALANCE_SEMAPHORE','/var/run/dmnbalance.pid');
+//  Interval between balance retrieval for a pubkey (in seconds)
+DEFINE('DMN_BALANCE_INTERVAL',900);
+//  URL for testnet balance retrieval (abe explorer API)
+DEFINE('DMN_BALANCE_URL_TESTNET','http://127.0.0.1:17890/chain/Axe/q/addressbalance/%%p%%');
+//  URL for mainnet balance retrieval (abe explorer API)
+DEFINE('DMN_BALANCE_URL_MAINNET','http://127.0.0.1:7890/chain/Axe/q/addressbalance/%%p%%');
+
+// Block Parser specifics
+//  Semaphore file (only allow 1 instance)
+DEFINE('DMN_BLOCKPARSER_SEMAPHORE','/var/run/dmnblockparser.pid');
+//  Activate archival (if disabled files are deleted once consumed)
+DEFINE('DMN_BLOCKPARSER_ARCHIVE_DO',false);
+//  Folder to archive json files (username subfolders will be created)
+DEFINE('DMN_BLOCKPARSER_ARCHIVE','/home/axe-blkhist/archive/current/');
+//  Folder to archive longterm (multiple json files together per username)
+DEFINE('DMN_BLOCKPARSER_ARCHIVE_LONGTERM','/home/axe-blkhist/archive/longterm/');
+//  Minimum number of files to tar together for longterm archiving
+DEFINE('DMN_BLOCKPARSER_ARCHIVE_LONGTERM_MIN',576);
+
+// Third parties fetching configuration
+//  Axe Whale partner ID
+DEFINE('DMN_AXEWHALE_PARTNERID', '000000000000');
+
+// Auto-Update URLs
+//  Testnet binary (Bamboo AXE server)
+DEFINE('DMN_AUTOUPDATE_TEST','https://bamboo.axe.org/artifact/AXEL-DEV/JOB1/build-latestSuccessful/gitian-linux-axe-dist/axecore-0.12.2-linux64.tar.gz');
+//  Semaphore
+DEFINE('DMN_AUTOUPDATE_SEMAPHORE','/var/run/dmnautoupdate.pid');
+
+// Command Download specifics
+//  Download folder
+DEFINE('DMN_CDL_DIR','/var/www/axe/download/');
+//  Download URL
+DEFINE('DMN_CDL_URL','https://cdl.yourdomain.tk/');
+
+// Direct access to DB (should not be used)
+DEFINE('DMNCTLMYSQLUSER','axe-mnninja-com');
+DEFINE('DMNCTLMYSQLPASS','yourrandompassword');
+DEFINE('DMNCTLMYSQLDATABASE','axe_ninja');
+DEFINE('DMNCTLMYSQLHOST','localhost');
+
+// Webservice configuration
+//  Public API end-point
+define('DMN_URL_API','https://yourdomain.tk/api');
+//  Private API end-point
+define('DMN_URL_CMD','https://cmd.yourdomain.tk');
+//  Private API SSL configuration (you need a CA, certificate and private key for this hub client)
+define('DMN_SSL_CAINFO','/usr/share/ca-certificates/yourdomain.tk/AxeNinja_CA_Root.crt');
+define('DMN_SSL_CERT','/etc/ssl/private/hub01.cmd.yourdomain.tk.crt');
+define('DMN_SSL_KEY','/etc/ssl/private/hub01.cmd.yourdomain.tk.key');
+//  Private API interface to use
+define('DMN_INTERFACE','::1');
+
+// Indicate the configuration was loaded
+DEFINE('DMN_CONFIG',true);
+
+?>
