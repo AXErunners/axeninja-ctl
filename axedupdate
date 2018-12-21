@@ -39,7 +39,7 @@ function delTree($dir) {
 
 xecho("axed auto updater (testnet) v1.0\n");
 xecho("Retrieving current latest binary date and size: ");
-$test = get_headers("https://axerunners.atlassian.net/builds/browse/AXEL-DEV/latest/artifact/JOB1/gitian-linux-axe-dist/axe-0.12.0-linux64.tar.gz", 1);
+$test = get_headers("https://github.com/AXErunners/axe/releases/download/v1.1.8/axecore-1.1.8-x86_64-linux-gnu.tar.gz", 1);
 echo $test["Last-Modified"]."\n";
 
 $datanew = sha1(serialize(array("Last-Modified" => $test["Last-Modified"],

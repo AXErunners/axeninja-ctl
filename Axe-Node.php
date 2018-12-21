@@ -23,8 +23,8 @@ namespace Axe;
 
 use Exception;
 
-define('PROTOCOL_VERSION',70208);
-define('PROTOCOL_MAGIC',"\xbf\x0c\x6b\xbd");
+define('PROTOCOL_VERSION',70210);
+define('PROTOCOL_MAGIC',"\xb5\xce\x6b\x04");
 define('HRVERSION',"/Axe Core:%s/AXE Ninja Port Checker:%s.%d/");
 define('THISVERSION',5);
 
@@ -52,7 +52,7 @@ class Node {
         private $subver;
         private $prot_magic;
 
-	public function __construct($ip, $port = 9999, $timeout = 5, $versionid = '1.0.0', $sversionid = '0.12.2.2', $protver = PROTOCOL_VERSION, $prot_magic = PROTOCOL_MAGIC) {
+	public function __construct($ip, $port = 9937, $timeout = 5, $versionid = '1.0.0', $sversionid = '0.12.2.2', $protver = PROTOCOL_VERSION, $prot_magic = PROTOCOL_MAGIC) {
 		$this->sock = @fsockopen($ip, $port, $errno, $errstr, $timeout);
 		if (!$this->sock) throw new Exception($errstr, $errno);
 

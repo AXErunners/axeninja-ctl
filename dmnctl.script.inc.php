@@ -1127,10 +1127,10 @@ function dmn_status($dmnpid,$istestnet) {
 
     // Get default port
     if ($dmnpidinfo['conf']->getconfig('testnet') == '1') {
-      $port = 19999;
+      $port = 19937;
     }
     else {
-      $port = 9999;
+      $port = 9937;
     }
 
     // Default values
