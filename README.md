@@ -68,4 +68,4 @@ blocknotify=/opt/axeninja-ctl/axeblocknotify
 * Restart your node.
 * On each block received by the node, the script will be called and data will be created in /dev/shm.
 
-_Based on AXE Ninja by Alexandre (aka elbereth) Devilliers_
+_Based on Dash Ninja by Alexandre (aka elbereth) Devilliers_
