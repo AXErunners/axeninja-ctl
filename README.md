@@ -21,9 +21,9 @@ It contains:
 * dmnvotesrrd and dmnvotesrrdexport: are obsolete v11 votes storage and exported (for graphs)
 
 ## Requirement:
-* AXE Ninja Back-end: https://github.com/elbereth/axeninja-be
-* AXE Ninja Database: https://github.com/elbereth/axeninja-db
-* AXE Ninja Front-End: https://github.com/elbereth/axeninja-fe
+* AXE Ninja Back-end: https://github.com/axerunners/axeninja-be
+* AXE Ninja Database: https://github.com/axerunners/axeninja-db
+* AXE Ninja Front-End: https://github.com/axerunners/axeninja-fe
 * PHP 5.6 with curl
 
 Important: Almost all the scripts uses the private rest API to retrieve and submit data to the database (only dmnblockcomputeexpected uses direct MySQL access).
@@ -32,7 +32,7 @@ Important: Almost all the scripts uses the private rest API to retrieve and subm
 * Go to /opt
 * Get latest code from github:
 ```shell
-git clone https://github.com/elbereth/axeninja-ctl.git
+git clone https://github.com/axerunners/axeninja-ctl.git
 ```
 * Get sub-modules:
 ```shell

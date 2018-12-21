@@ -1,7 +1,7 @@
 #!/bin/zsh
 #
 #   This file is part of AXE Ninja.
-#   https://github.com/elbereth/axeninja-ctl
+#   https://github.com/axerunners/axeninja-ctl
 #
 #   AXE Ninja is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
