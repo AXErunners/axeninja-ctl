@@ -1,0 +1,6 @@
+[submodule "EasyAXE-PHP"]
+	path = EasyAXE-PHP
+	url = https://github.com/axerunners/EasyAxe-php.git
+[submodule "kraken-api-client"]
+	path = kraken-api-client
+	url = https://github.com/payward/kraken-api-client.git
