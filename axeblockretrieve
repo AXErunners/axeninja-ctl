@@ -62,7 +62,7 @@ xecho("Block retrieval from $uname (from $blockidfrom to $blockidto), retrieving
 
 if (isset($unamelist) && is_array($unamelist) && array_key_exists($uname,$unamelist)) {
   $config = new AxeConfig($uname);
-  $rpc = new \elbereth\EasyAxe($config->getconfig('rpcuser'),$config->getconfig('rpcpassword'),'localhost',$config->getconfig('rpcport'));
+  $rpc = new \axerunners\EasyAxe($config->getconfig('rpcuser'),$config->getconfig('rpcpassword'),'localhost',$config->getconfig('rpcport'));
   echo "OK\n";
 }
 else {
