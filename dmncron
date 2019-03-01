@@ -37,7 +37,7 @@ fi
 
 # Sequentially run scripts
 #/opt/dmnctl/axedupdate >> $updatelog
-/opt/dmnctl/dmnctl status >> $statuslog
+/usr/bin/timeout 10m /opt/dmnctl/dmnctl status >> $statuslog
 #/opt/dmnctl/dmnvotesrrd >> $votesrrdlog
 /usr/bin/php /opt/dmnctl/dmndbgen masternodeactive >> $statuslog
 /usr/bin/php /home/axe-mnwww/www/main/api/cron.php main nodesstatus >> $statuslog
