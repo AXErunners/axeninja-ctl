@@ -23,7 +23,7 @@ if ((!defined('DMN_SCRIPT')) || (DMN_SCRIPT !== true)) {
   die('This is part of the dmnctl script, run it from there.');
 }
 
-DEFINE('DMN_VERSION','2.3.1');
+DEFINE('DMN_VERSION','2.4.0');
 
 // Execute port check commands
 function dmn_portcheck_mt(&$commands) {
@@ -82,7 +82,7 @@ function dmn_portcheck_mt(&$commands) {
     // Execute the command in a thread
     while ((count($threads) < DMN_THREADS_MAX) && ($commandsdone < count($commands))) {
       $pipes[$commandsdone] = array();
-      $thres[$commandsdone] = proc_open(DMN_DIR.'/dmnportcheckdo '.$commands[$commandsdone]['cmd'].' '.$commands[$commandsdone]['file'],$descriptorspec,$pipes[$commandsdone]);
+      $thres[$commandsdone] = proc_open('/usr/bin/timeout 30 '.DMN_DIR.'/dmnportcheckdo '.$commands[$commandsdone]['cmd'].' '.$commands[$commandsdone]['file'],$descriptorspec,$pipes[$commandsdone]);
       if (is_resource($thres[$commandsdone])) {
         $threads[] = array('cid' => $commandsdone, 'res' => $thres[$commandsdone]);
         $commandsdone++;
@@ -160,6 +160,7 @@ if ($argv[1] == 'nodb') {
   echo "Done (".count($mnpc)." entries)\n";
 }
 else {
+
   xecho('Retrieving MN info (mainnet): ');
   $result = dmn_cmd_get('/masternodes',array(),$response);
   if ($response['http_code'] == 200) {
@@ -191,10 +192,11 @@ else {
     }
     die(201);
   }
+
   xecho('Retrieving MN info (testnet): ');
   $result = dmn_cmd_get('/masternodes',array("testnet" => 1),$response);
   if ($response['http_code'] == 200) {
-    echo "Fetched...";
+    echo "Fetched... ";
     $mnlist = json_decode($result,true);
     if ($mnlist === false) {
       echo " Failed to JSON decode!\n";
@@ -207,7 +209,7 @@ else {
     foreach($mnlist['data']['masternodes'] as $mnip) {
       $mnips[] = $mnip['MasternodeIP'].'-'.$mnip['MasternodePort'].'-1';
     }
-    echo " OK (".count($mnlist['data'])." masternodes)\n";
+    echo " OK (".count($mnlist['data']["masternodes"])." masternodes)\n";
   }
   else {
     echo "Failed [".$response['http_code']."]\n";
@@ -233,16 +235,16 @@ else {
     $mnsubver[$row['NodeIP'].'-'.$row['NodePort'].'-'.$row['NodeTestNet']] = $row['NodeSubVer'];
     if (in_array($row['NodeIP'].'-'.$row['NodePort'].'-'.$row['NodeTestNet'],$mnips)) {
       $numok++;
-      echo "[".$row['NodeTestNet']."] ".$row['NodeIP'].':'.$row['NodePort']." - ".$row['NextCheck']." - ";
+//      echo "[".$row['NodeTestNet']."] ".$row['NodeIP'].':'.$row['NodePort']." - ".$row['NextCheck']." - ";
       $date = new DateTime($row['NextCheck']);
       $row['NextCheck'] = $date->getTimestamp();
-      echo time()." > ".$row['NextCheck']." = ";
-      if ( (time() > $row['NextCheck']) ) {
-        echo "True\n";
+//      echo time()." > ".$row['NextCheck']." = ";
+      if ((time() > $row['NextCheck']) ) {
+//        echo "True\n";
         $mnpc[] = $row['NodeIP'].'-'.$row['NodePort'].'-'.$row['NodeTestNet'];
       }
       else {
-        echo "False\n";
+//        echo "False\n";
         $mnpcnot[] = $row['NodeIP'].'-'.$row['NodePort'].'-'.$row['NodeTestNet'];
       }
     }
