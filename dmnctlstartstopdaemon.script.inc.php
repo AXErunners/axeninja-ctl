@@ -87,7 +87,7 @@ function dmn_stop($uname,$conf) {
     $testinfo = '';
   }
 
-  $rpc = new \elbereth\EasyAxe($conf->getconfig('rpcuser'),$conf->getconfig('rpcpassword'),'localhost',$conf->getconfig('rpcport'));
+  $rpc = new \axerunners\EasyAxe($conf->getconfig('rpcuser'),$conf->getconfig('rpcpassword'),'localhost',$conf->getconfig('rpcport'));
 
   $pid = dmn_getpid($uname,$testnet);
 
