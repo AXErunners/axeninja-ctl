@@ -68,7 +68,7 @@ $nodepath3 = DMN_PID_PATH.$uname.'/.axecore/';
   }
 
   xecho("Executing RPC command '$rpccommand': ");
-  $rpc = new \elbereth\EasyAxe($conf->getconfig('rpcuser'),$conf->getconfig('rpcpassword'),'localhost',$conf->getconfig('rpcport'));
+  $rpc = new \axerunners\EasyAxe($conf->getconfig('rpcuser'),$conf->getconfig('rpcpassword'),'localhost',$conf->getconfig('rpcport'));
 
   $rpclist = explode(' ',$rpccommand);
   $rpcparams = array();
