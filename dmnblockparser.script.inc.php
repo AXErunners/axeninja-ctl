@@ -23,7 +23,7 @@ if (!defined('DMN_SCRIPT') || !defined('DMN_CONFIG') || (DMN_SCRIPT !== true) ||
   die('Not executable');
 }
 
-define('DMN_VERSION','1.5.1');
+define('DMN_VERSION','1.5.2');
 
 xecho('dmnblockparser v'.DMN_VERSION."\n");
 if (file_exists(DMN_BLOCKPARSER_SEMAPHORE) && (posix_getpgid(intval(file_get_contents(DMN_BLOCKPARSER_SEMAPHORE))) !== false) ) {
@@ -375,6 +375,21 @@ function dmn_blockparse($uname, $testnet, $mnpubkeys, $mndonations, $poolpubkeys
                 "LastUpdate" => date('Y-m-d H:i:s', $bt['curtime']),
                 "Protocol" => $btprotocol,
                 "BlockMNRatio" => $btpam);
+          }
+          else if (is_array($bt["masternode"]) && (count($bt["masternode"]) == 1) && (array_key_exists("payee",$bt["masternode"][0]))) {
+            echo $bt["masternode"][0]['payee'] . "\n";
+            if (array_key_exists('amount', $bt["masternode"][0]) && array_key_exists('coinbasevalue', $bt)) {
+              $btpam = $bt["masternode"][0]['amount'] / $bt['coinbasevalue'];
+            } else {
+              $btpam = 0.2;
+            }
+            $bhws[] = array("BlockHeight" => $blockid,
+              "BlockTestNet" => $testnet,
+              "FromNodeUserName" => $uname,
+              "BlockMNPayee" => $bt["masternode"][0]['payee'],
+              "LastUpdate" => date('Y-m-d H:i:s', $bt['curtime']),
+              "Protocol" => $btprotocol,
+              "BlockMNRatio" => $btpam);
           }
           else {
             echo "No payee\n";
